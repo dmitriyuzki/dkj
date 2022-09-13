@@ -6,41 +6,41 @@ ENV nginx_source_url=$nginx_source_url
 WORKDIR /tmp/nginx_build
 RUN wget "$nginx_source_url" -O nginx.tar.gz \
     && \
-    apk add gcc               \
-            libc-dev          \
-            make              \
-            openssl-dev       \
-            pcre2-dev         \
-            zlib-dev          \
-            linux-headers     \
-            libxslt-dev       \
-            gd-dev            \
-            geoip-dev         \
-            perl-dev          \
-            libedit-dev       \
-            bash              \
-            alpine-sdk        \
-            findutils          \
-        --no-cache            \
+    apk add gcc \
+            libc-dev \
+            make \
+            openssl-dev \
+            pcre2-dev \
+            zlib-dev \
+            linux-headers \
+            libxslt-dev \
+            gd-dev \
+            geoip-dev \
+            perl-dev \
+            libedit-dev \
+            bash \
+            alpine-sdk \
+            findutils \
+        --no-cache \
         --virtual .build-deps \
     && \
     mkdir nginx \
     && \
-    tar -xf nginx.tar.gz     \
-        -C nginx             \
+    tar -xf nginx.tar.gz \
+        -C nginx \
         --strip-components=1 \
     && \
     cd nginx \
     && \
-    ./configure --prefix=/etc/nginx                        \
-               --sbin-path=/usr/local/bin/nginx          \
-               --conf-path=/etc/nginx/nginx.conf         \
+    ./configure --prefix=/etc/nginx \
+               --sbin-path=/usr/local/bin/nginx \
+               --conf-path=/etc/nginx/nginx.conf \
                --http-log-path=/var/log/nginx/access.log \
                --error-log-path=/var/log/nginx/error.log \
-               --lock-path=/var/lock/nginx.lock          \
-               --pid-path=/var/run/nginx.pid             \
-               --modules-path=/etc/nginx/modules         \
-               --with-http_ssl_module                    \
+               --lock-path=/var/lock/nginx.lock \
+               --pid-path=/var/run/nginx.pid \
+               --modules-path=/etc/nginx/modules \
+               --with-http_ssl_module \
     && \
     make \
     && \
@@ -54,11 +54,11 @@ RUN addgroup -S nginx \
     && \
     adduser -S -D -s /sbin/nologin -h /var/www -G nginx nginx \
     && \
-    mkdir -p /etc/nginx/conf.d      \
-             /etc/nginx/snippets    \
-             /var/log/nginx         \
-             /var/cache/nginx       \
-             /etc/ssl/certs/nginx   \
+    mkdir -p /etc/nginx/conf.d \
+             /etc/nginx/snippets \
+             /var/log/nginx \
+             /var/cache/nginx \
+             /etc/ssl/certs/nginx \
              /etc/ssl/private/nginx \
     && \
     touch /var/run/nginx.pid \
