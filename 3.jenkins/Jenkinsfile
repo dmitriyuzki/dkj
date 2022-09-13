@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+    options {
+        buildDiscarder logRotator(numToKeepStr: '10')
+    }
+    parameters {
+        string(name: 'NGINX_TEST_TIMEOUT',
+               defaultValue: '10',
+               description: 'NginX availability timeout limit during test.',
+               trim: true)
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh """
+                    docker build --no-cache -t nginx_1:test ./1.docker
+                """
+            }
+        }
+        stage('Test') {
+            steps {
+                sh """
+                    if [ "\$(docker ps -a | grep nginx_1_test)" ]; then
+                        docker stop nginx_1_test
+                        docker rm nginx_1_test
+                    fi
+
+                    docker run --name nginx_1_test -p 10080:80 -p 10443:443 -d nginx_1:test
+
+                    slept="0"
+                    while [ ! nc -z localhost 10080] && [ \$slept -le $NGINX_TEST_TIMEOUT ]; do   
+                        slept=\$[\$slept+1]
+                    done
+
+                    if [ "\$( docker container inspect -f '{{.State.Status}}' nginx_1_test )" != "running" ] || [ \$slept -gt $NGINX_TEST_TIMEOUT ]; then
+                        exit 1
+                    fi
+                """
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh """
+                    docker tag nginx_1:test saybles/nginx_1:test
+                    docker push saybles/nginx_1:test
+
+                    kubectl apply -f 2.kubernetes/nginx-configmap.yaml
+                    kubectl apply -f 2.kubernetes/nginx-deployment.yaml
+                    kubectl apply -f 2.kubernetes/nginx-service.yaml
+                """
+            }
+        }
+    }
+    post {
+        always {
+            sh """
+                docker stop nginx_1_test
+                docker rm nginx_1_test
+            """
+        }
+    }
+}

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: docker.io/saybles/nginx_task_1:test
+        name: application-nginx
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "[ -f /run/nginx.pid ] && ps -A | grep nginx"
+          initialDelaySeconds: 4
+          periodSeconds: 2
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /
+            port: 80
+          initialDelaySeconds: 4
+          periodSeconds: 2
+        volumeMounts:
+          - name: nginx-conf-mount
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx-conf
+      volumes:
+      - name: nginx-conf-mount
+        configMap:
+          name: nginx-configmap
